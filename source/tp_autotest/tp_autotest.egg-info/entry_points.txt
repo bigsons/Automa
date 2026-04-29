@@ -1,0 +1,2 @@
+[console_scripts]
+autotest-server = tp_autotest.server:main

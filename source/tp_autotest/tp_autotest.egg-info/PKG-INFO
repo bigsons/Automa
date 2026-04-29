@@ -1,0 +1,36 @@
+Metadata-Version: 2.4
+Name: tp_autotest
+Version: 0.1.1
+Summary: A Python package for extending Airtest with Selenium and other utilities.
+Author: pengshaojie
+Author-email: pengshaojie@tp-link.com.hk
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Testing
+Classifier: License :: OSI Approved :: Apache License 2.0
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Requires-Python: >=3.6
+Requires-Dist: airtest
+Requires-Dist: selenium
+Requires-Dist: pynput
+Requires-Dist: opencv-python
+Requires-Dist: pywifi
+Requires-Dist: psutil
+Requires-Dist: pyserial
+Requires-Dist: jinja2
+Requires-Dist: six
+Requires-Dist: paddlepaddle
+Requires-Dist: paddleocr
+Requires-Dist: numpy
+Requires-Dist: websockets
+Requires-Dist: iperf3
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

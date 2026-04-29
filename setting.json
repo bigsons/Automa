@@ -1,0 +1,11 @@
+{
+  "use_default_python": true,
+  "model_name": "Archer BE800(US) 1.0",
+  "model_version": "",
+  "model_path": "D:\\UserData\\代码\\AutoTest-main\\case",
+  "default_serial": "",
+  "wired_adapter": "",
+  "wireless_adapter": "",
+  "adapter_support_6g": false,
+  "selected_scripts": []
+}

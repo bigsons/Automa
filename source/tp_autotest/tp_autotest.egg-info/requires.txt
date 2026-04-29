@@ -1,0 +1,14 @@
+airtest
+selenium
+pynput
+opencv-python
+pywifi
+psutil
+pyserial
+jinja2
+six
+paddlepaddle
+paddleocr
+numpy
+websockets
+iperf3

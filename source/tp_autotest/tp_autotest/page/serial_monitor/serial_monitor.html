@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Automa串口监控服务</title>
+    <link rel="stylesheet" href="/static/css/xterm.css" />
+    <style>
+        :root {
+            --bg-color: #f5f6f7;
+            --text-color: #1d2529;
+            --title-color: #36444b;
+            --card-bg: #ffffff;
+            --card-border: #dddddd;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --inner-bg: #f5f7fa;
+            --divider-color: #e5e7eb;
+            --tab-hover-bg: #eff6ff;
+            --tab-active-bg: #e0f2fe;
+            --tab-active-border: #0ea5e9;
+            --button-bg: #4ACEE1;
+            --button-text: #ffffff;
+            --close-icon-hover: #ef4444;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-color);
+            padding: 20px;
+            background-color: #f5f6f7;
+            background-image: linear-gradient(to right, #44ADD0, #4ACBD6, #44ADD0);
+            background-size: 100% 100px;
+            background-repeat: no-repeat;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            height: 100%;
+        }
+        .title {
+            color: #ffffff;
+            text-align: center;
+            font-size: 2.2em;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 1200px;
+            height: 100px;
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASAAAACOAQMAAACrLEfpAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURWtra/v7+6En/9sAAAACdFJOUwIZIM4HegAAAY9JREFUWMPVl0FOhDAUhl9pDCvTTOKeeBISN7p0M5mlN/AIlsu48RLew40ewd1MIuFJAB0Yad8PvsGxGxLy5evf19IWomgzzG8kNT3ILtvdwpkIgsiHoIyraVB+gqYFRucQiK73UBaEbAVMGASlaqYRqF+WCVCqZoIgg0C04qa9RyGDQDTPZDYANDbin1CqZrJ/nckcMxNkohvANLo1y5CeSa87RcgjUI5AZ+v1nQg1X1oESplLNahqt/zTM/270VkkOF3mAERZiUBypnpZqpkUM1WwCaqTU6sTZErjkCu71RCDkqvm8fpxK1yem0tvUgBQnf1gC2H+PrC/oDp7IUKQySEmve70TBYx1QdRt/XvolCxLBTOZA5MPAYRYqKLRy9mag480bSH2opn41DbHXmKQfng728C5GZBfgC5XffhyyZzv32OQK2pnTDB1DtTwpkEEwRRgUAEZOrf42TTDChDMjnElDyRDIVvqTJkA9DgrVkWOn4mj0DEQCaCTA8INDkTIaZ67cuZ6JxfZNPv2ieSmGI13WngNAAAAABJRU5ErkJggg==');
+            background-repeat: no-repeat;
+            background-position: right bottom;
+            background-size: 288px 141px;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .su-card {
+            margin-top: 30px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        .card_head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--divider-color);
+            flex-shrink: 0;
+        }
+        .card_title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--title-color);
+        }
+        .card_content {
+            padding-top: 14px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            overflow: auto;
+        }
+        #port-tabs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .tab-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid var(--divider-color);
+            position: relative;
+        }
+        .tab-item:hover {
+            background-color: var(--tab-hover-bg);
+        }
+        .tab-item.active {
+            background-color: var(--tab-active-bg);
+            border-color: var(--tab-active-border);
+            font-weight: 600;
+        }
+        .tab-close-icon {
+            margin-left: 10px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            line-height: 1;
+        }
+        .tab-close-icon:hover {
+            background-color: var(--close-icon-hover);
+            color: white;
+        }
+        .add-port-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            font-size: 20px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 28px;
+        }
+        #no-port-status {
+            margin-right: 10px;
+            color: #888;
+        }
+        .terminal-wrapper {
+            flex-grow: 1;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 0 10px 5px 10px;
+            display: flex;
+        }
+        #terminal-container {
+            width: 100%;
+            height: 100%;
+        }
+        .xterm .xterm-viewport {
+            overflow-y: hidden !important;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: var(--card-bg);
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid var(--card-border);
+            width: 80%;
+            max-width: 400px;
+            border-radius: 10px;
+        }
+        .modal-header {
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--divider-color);
+        }
+        .modal-body {
+            padding: 15px 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            border: 1px solid var(--card-border);
+        }
+        .modal-footer {
+            text-align: right;
+        }
+        .modal-footer button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Automa串口监控服务</h1>
+        <div class="su-card">
+            <div class="card_head">
+                <div class="card_title">Automa 串口列表</div>
+            </div>
+            <div class="card_content">
+                <div id="port-tabs">
+                    <span id="no-port-status">未开启串口</span>
+                    <button class="add-port-btn" id="addPortBtn" title="打开新串口">+</button>
+                </div>
+                <div class="terminal-wrapper">
+                    <div id="terminal-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="openPortModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>打开新串口</h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="portName">端口号:</label>
+                    <input type="text" id="portName" name="portName">
+                </div>
+                <div class="form-group">
+                    <label for="baudRate">波特率:</label>
+                    <input type="number" id="baudRate" name="baudRate" value="115200">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelOpenPort">取消</button>
+                <button id="confirmOpenPort" class="btn-primary">打开</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/xterm.js"></script>
+    <script src="/static/js/addon-fit.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const term = new Terminal({
+                cursorBlink: true,
+                convertEol: true,
+                fontFamily: "Consolas, Menlo, Monaco, 'Courier New', monospace",
+                fontSize: 14,
+                theme: {
+                    background: '#1e1e1e'
+                },
+                scrollback: 50000,
+                allowTransparency: true,
+                windowsMode: true
+            });
+            const fitAddon = new FitAddon.FitAddon();
+            term.loadAddon(fitAddon);
+            const terminalContainer = document.getElementById('terminal-container');
+            term.open(terminalContainer);
+                fitAddon.fit();
+            window.addEventListener('resize', () => fitAddon.fit());
+
+            const tabsContainer = document.getElementById('port-tabs');
+            const addPortBtn = document.getElementById('addPortBtn');
+            const modal = document.getElementById('openPortModal');
+            const confirmOpenPortBtn = document.getElementById('confirmOpenPort');
+            const cancelOpenPortBtn = document.getElementById('cancelOpenPort');
+            const portNameInput = document.getElementById('portName');
+            const baudRateInput = document.getElementById('baudRate');
+            const noPortStatus = document.getElementById('no-port-status');
+
+            let ws;
+            let activePort = null;
+            const subscribedPorts = new Set();
+            const terminalHistory = new Map();
+
+            function getCurrentTerminalContent() {
+                const buffer = term.buffer.active;
+                let content = '';
+                for (let i = 0; i < buffer.length; i++) {
+                    const line = buffer.getLine(i);
+                    if (line) {
+                        content += line.translateToString(true) + '\n';
+                    }
+                }
+                return content;
+            }
+
+            function updateNoPortStatus() {
+                noPortStatus.style.display = subscribedPorts.size === 0 ? 'inline' : 'none';
+            }
+
+            function connect() {
+                const wsHost = window.location.hostname || '127.0.0.1';
+                const wsPort = 11693;
+                ws = new WebSocket(`ws://${wsHost}:${wsPort}`);
+
+                ws.onopen = () => {
+                    term.writeln('\x1b[32mWelcome to Automa Serial Monitor!\x1b[0m');
+                    sendMessage('list_ports');
+                };
+
+                ws.onmessage = (event) => {
+                    const msg = JSON.parse(event.data);
+                    handleMessage(msg);
+                };
+
+                ws.onclose = () => {
+                    term.writeln('\n\x1b[31mWebSocket disconnected. Attempting to reconnect in 3 seconds...\x1b[0m');
+                    setTimeout(connect, 3000);
+                };
+
+                ws.onerror = (error) => {
+                    term.writeln(`\n\x1b[31mWebSocket error: ${error.message}\x1b[0m`);
+                };
+            }
+
+            function sendMessage(type, payload = {}) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type, payload }));
+                }
+            }
+
+            function handleMessage(msg) {
+                const { type, payload } = msg;
+                switch (type) {
+                    case 'port_list':
+                        updateTabs(Object.keys(payload.ports));
+                        updateNoPortStatus();
+                        break;
+                    case 'port_opened':
+                        const newPort = payload.port;
+                        if (!document.querySelector(`.tab-item[data-port="${newPort}"]`)) {
+                            sendMessage('subscribe_port', { port: newPort, baudrate: payload.baudrate });
+                        }
+                        break;
+                    case 'port_closed':
+                        removeTab(payload.port);
+                        updateNoPortStatus();
+                        break;
+                    case 'port_subscribed':
+                        subscribedPorts.add(payload.port);
+                        addTab(payload.port);
+                        setActiveTab(payload.port);
+                        updateNoPortStatus();
+                        break;
+                    case 'port_unsubscribed':
+                        subscribedPorts.delete(payload.port);
+                        removeTab(payload.port);
+                        updateNoPortStatus();
+                        break;
+                    case 'data':
+                        try {
+                            const dataToWrite = atob(payload.data);
+                            if (payload.port === activePort) {
+                                term.write(dataToWrite);
+                            } else {
+                                const currentHistory = terminalHistory.get(payload.port) || '';
+                                terminalHistory.set(payload.port, currentHistory + dataToWrite);
+                            }
+                        } catch (e) {
+                            console.error('Error decoding data from server:', e);
+                            // Optionally, write the raw payload to the terminal if it's not decodable
+                            // term.write(payload.data);
+                        }
+                        break;
+                    case 'error':
+                        alert(`Error: ${payload.message}`);
+                        break;
+                }
+            }
+
+            function updateTabs(ports) {
+                document.querySelectorAll('.tab-item').forEach(tab => {
+                    const port = tab.dataset.port;
+                    if (port && !ports.includes(port)) {
+                        removeTab(port);
+                    }
+                });
+                ports.forEach(port => {
+                    if (!document.querySelector(`.tab-item[data-port="${port}"]`)) {
+                        addTab(port);
+                    }
+                });
+                if (!activePort && ports.length > 0) {
+                    setActiveTab(ports[0]);
+                } else if (ports.length === 0) {
+                    term.clear();
+                    activePort = null;
+                }
+            }
+
+            function addTab(port) {
+                if (document.querySelector(`.tab-item[data-port="${port}"]`)) return;
+
+                const tab = document.createElement('div');
+                tab.className = 'tab-item';
+                tab.dataset.port = port;
+                tab.textContent = port;
+
+                const closeIcon = document.createElement('span');
+                closeIcon.className = 'tab-close-icon';
+                closeIcon.innerHTML = '&times;';
+                closeIcon.title = `Unsubscribe from ${port}`;
+                closeIcon.onclick = (e) => {
+                    e.stopPropagation();
+                    sendMessage('unsubscribe_port', { port });
+                };
+
+                tab.appendChild(closeIcon);
+                tab.onclick = () => setActiveTab(port);
+                tabsContainer.insertBefore(tab, addPortBtn);
+            }
+
+            function removeTab(port) {
+                const tab = document.querySelector(`.tab-item[data-port="${port}"]`);
+                if (tab) {
+                    tab.remove();
+                }
+                if (activePort === port) {
+                    term.clear();
+                    activePort = null;
+                    const firstTab = document.querySelector('.tab-item');
+                    if (firstTab) {
+                        setActiveTab(firstTab.dataset.port);
+                    }
+                }
+                terminalHistory.delete(port);
+                updateNoPortStatus();
+            }
+
+            function setActiveTab(port) {
+                if (activePort === port) return;
+
+                if (activePort) {
+                    terminalHistory.set(activePort, getCurrentTerminalContent());
+                }
+
+                activePort = port;
+                term.clear();
+
+                const history = terminalHistory.get(port);
+                if (history) {
+                    term.write(history);
+                } else {
+                    term.writeln(`\x1b[32mConnected to ${port}\x1b[0m`);
+                }
+
+                document.querySelectorAll('.tab-item').forEach(t => {
+                    t.classList.toggle('active', t.dataset.port === port);
+                });
+
+                if (!subscribedPorts.has(port)) {
+                    sendMessage('subscribe_port', { port });
+                }
+                term.focus();
+            }
+
+            term.onData(data => {
+                if (activePort) {
+                    sendMessage('data', { port: activePort, data });
+                }
+            });
+
+            addPortBtn.onclick = () => {
+                modal.style.display = 'block';
+                portNameInput.focus();
+            };
+            cancelOpenPortBtn.onclick = () => {
+                modal.style.display = 'none';
+            };
+            window.onclick = (event) => {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            };
+            confirmOpenPortBtn.onclick = () => {
+                const port = portNameInput.value.trim();
+                const baudrate = parseInt(baudRateInput.value, 10);
+                if (port && baudrate > 0) {
+                    sendMessage('subscribe_port', { port, baudrate });
+                    modal.style.display = 'none';
+                    portNameInput.value = '';
+                } else {
+                    alert('Please enter a valid port name and baud rate.');
+                }
+            };
+
+            connect();
+            updateNoPortStatus();
+        });
+    </script>
+</body>
+</html>
